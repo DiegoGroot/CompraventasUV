@@ -1,0 +1,548 @@
+{
+  "version": "3.0.0",
+  "darkMode": true,
+  "gridEnabling": false,
+  "currentViewName": null,
+  "defaultView": {
+    "detailLevel": "All",
+    "relationshipMode": "All",
+    "tablePositions": [
+      {
+        "name": "usuarios",
+        "schemaName": "public",
+        "x": 733.6036447677421,
+        "y": 236.99179882182773
+      },
+      {
+        "name": "tokens_verificacion",
+        "schemaName": "public",
+        "x": 1156.384228515625,
+        "y": 416.7658190993616
+      },
+      {
+        "name": "categorias",
+        "schemaName": "public",
+        "x": 396.7519710010817,
+        "y": 21.160761214311492
+      },
+      {
+        "name": "tiendas",
+        "schemaName": "public",
+        "x": 1158.785294045334,
+        "y": 105.8047948836909
+      },
+      {
+        "name": "productos",
+        "schemaName": "public",
+        "x": 1700.1130645751953,
+        "y": 74
+      },
+      {
+        "name": "imagenes_producto",
+        "schemaName": "public",
+        "x": 2236.664166259766,
+        "y": 392
+      },
+      {
+        "name": "favoritos",
+        "schemaName": "public",
+        "x": 2236.664166259766,
+        "y": 12
+      },
+      {
+        "name": "carritos",
+        "schemaName": "public",
+        "x": 392.63875984052834,
+        "y": 197.45095151788945
+      },
+      {
+        "name": "items_carrito",
+        "schemaName": "public",
+        "x": 2236.664166259766,
+        "y": 186
+      },
+      {
+        "name": "pedidos",
+        "schemaName": "public",
+        "x": 1704.4040802001953,
+        "y": 522.384186678713
+      },
+      {
+        "name": "detalles_pedido",
+        "schemaName": "public",
+        "x": 2236.664166259766,
+        "y": 630
+      },
+      {
+        "name": "conversaciones",
+        "schemaName": "public",
+        "x": 2236.664166259766,
+        "y": 868
+      },
+      {
+        "name": "mensajes",
+        "schemaName": "public",
+        "x": 2814.8894012451174,
+        "y": 12
+      },
+      {
+        "name": "reportes",
+        "schemaName": "public",
+        "x": 2236.664166259766,
+        "y": 1107
+      },
+      {
+        "name": "regiones",
+        "schemaName": "public",
+        "x": 410.5644935473003,
+        "y": 578.9425167255638
+      },
+      {
+        "name": "facultades",
+        "schemaName": "public",
+        "x": 733.6036447677421,
+        "y": 574.8853389599432
+      }
+    ],
+    "tableGroupCollapseStates": [],
+    "stickyNoteLayouts": [],
+    "referencePaths": [
+      {
+        "firstFieldNames": [
+          "region_id"
+        ],
+        "firstTableName": "facultades",
+        "firstSchemaName": "public",
+        "firstRelation": "*",
+        "secondFieldNames": [
+          "id"
+        ],
+        "secondTableName": "regiones",
+        "secondSchemaName": "public",
+        "secondRelation": "1",
+        "checkPoints": []
+      },
+      {
+        "firstFieldNames": [
+          "usuario_id"
+        ],
+        "firstTableName": "tokens_verificacion",
+        "firstSchemaName": "public",
+        "firstRelation": "*",
+        "secondFieldNames": [
+          "id"
+        ],
+        "secondTableName": "usuarios",
+        "secondSchemaName": "public",
+        "secondRelation": "1",
+        "checkPoints": []
+      },
+      {
+        "firstFieldNames": [
+          "vendedor_id"
+        ],
+        "firstTableName": "tiendas",
+        "firstSchemaName": "public",
+        "firstRelation": "*",
+        "secondFieldNames": [
+          "id"
+        ],
+        "secondTableName": "usuarios",
+        "secondSchemaName": "public",
+        "secondRelation": "1",
+        "checkPoints": []
+      },
+      {
+        "firstFieldNames": [
+          "categoria_principal_id"
+        ],
+        "firstTableName": "tiendas",
+        "firstSchemaName": "public",
+        "firstRelation": "*",
+        "secondFieldNames": [
+          "id"
+        ],
+        "secondTableName": "categorias",
+        "secondSchemaName": "public",
+        "secondRelation": "1",
+        "checkPoints": []
+      },
+      {
+        "firstFieldNames": [
+          "region_id"
+        ],
+        "firstTableName": "tiendas",
+        "firstSchemaName": "public",
+        "firstRelation": "*",
+        "secondFieldNames": [
+          "id"
+        ],
+        "secondTableName": "regiones",
+        "secondSchemaName": "public",
+        "secondRelation": "1",
+        "checkPoints": []
+      },
+      {
+        "firstFieldNames": [
+          "facultad_id"
+        ],
+        "firstTableName": "tiendas",
+        "firstSchemaName": "public",
+        "firstRelation": "*",
+        "secondFieldNames": [
+          "id"
+        ],
+        "secondTableName": "facultades",
+        "secondSchemaName": "public",
+        "secondRelation": "1",
+        "checkPoints": []
+      },
+      {
+        "firstFieldNames": [
+          "vendedor_id"
+        ],
+        "firstTableName": "productos",
+        "firstSchemaName": "public",
+        "firstRelation": "*",
+        "secondFieldNames": [
+          "id"
+        ],
+        "secondTableName": "usuarios",
+        "secondSchemaName": "public",
+        "secondRelation": "1",
+        "checkPoints": []
+      },
+      {
+        "firstFieldNames": [
+          "tienda_id"
+        ],
+        "firstTableName": "productos",
+        "firstSchemaName": "public",
+        "firstRelation": "*",
+        "secondFieldNames": [
+          "id"
+        ],
+        "secondTableName": "tiendas",
+        "secondSchemaName": "public",
+        "secondRelation": "1",
+        "checkPoints": []
+      },
+      {
+        "firstFieldNames": [
+          "categoria_id"
+        ],
+        "firstTableName": "productos",
+        "firstSchemaName": "public",
+        "firstRelation": "*",
+        "secondFieldNames": [
+          "id"
+        ],
+        "secondTableName": "categorias",
+        "secondSchemaName": "public",
+        "secondRelation": "1",
+        "checkPoints": []
+      },
+      {
+        "firstFieldNames": [
+          "region_id"
+        ],
+        "firstTableName": "productos",
+        "firstSchemaName": "public",
+        "firstRelation": "*",
+        "secondFieldNames": [
+          "id"
+        ],
+        "secondTableName": "regiones",
+        "secondSchemaName": "public",
+        "secondRelation": "1",
+        "checkPoints": []
+      },
+      {
+        "firstFieldNames": [
+          "facultad_id"
+        ],
+        "firstTableName": "productos",
+        "firstSchemaName": "public",
+        "firstRelation": "*",
+        "secondFieldNames": [
+          "id"
+        ],
+        "secondTableName": "facultades",
+        "secondSchemaName": "public",
+        "secondRelation": "1",
+        "checkPoints": []
+      },
+      {
+        "firstFieldNames": [
+          "producto_id"
+        ],
+        "firstTableName": "imagenes_producto",
+        "firstSchemaName": "public",
+        "firstRelation": "*",
+        "secondFieldNames": [
+          "id"
+        ],
+        "secondTableName": "productos",
+        "secondSchemaName": "public",
+        "secondRelation": "1",
+        "checkPoints": []
+      },
+      {
+        "firstFieldNames": [
+          "usuario_id"
+        ],
+        "firstTableName": "favoritos",
+        "firstSchemaName": "public",
+        "firstRelation": "*",
+        "secondFieldNames": [
+          "id"
+        ],
+        "secondTableName": "usuarios",
+        "secondSchemaName": "public",
+        "secondRelation": "1",
+        "checkPoints": []
+      },
+      {
+        "firstFieldNames": [
+          "producto_id"
+        ],
+        "firstTableName": "favoritos",
+        "firstSchemaName": "public",
+        "firstRelation": "*",
+        "secondFieldNames": [
+          "id"
+        ],
+        "secondTableName": "productos",
+        "secondSchemaName": "public",
+        "secondRelation": "1",
+        "checkPoints": []
+      },
+      {
+        "firstFieldNames": [
+          "comprador_id"
+        ],
+        "firstTableName": "carritos",
+        "firstSchemaName": "public",
+        "firstRelation": "1",
+        "secondFieldNames": [
+          "id"
+        ],
+        "secondTableName": "usuarios",
+        "secondSchemaName": "public",
+        "secondRelation": "1",
+        "checkPoints": []
+      },
+      {
+        "firstFieldNames": [
+          "carrito_id"
+        ],
+        "firstTableName": "items_carrito",
+        "firstSchemaName": "public",
+        "firstRelation": "*",
+        "secondFieldNames": [
+          "id"
+        ],
+        "secondTableName": "carritos",
+        "secondSchemaName": "public",
+        "secondRelation": "1",
+        "checkPoints": []
+      },
+      {
+        "firstFieldNames": [
+          "producto_id"
+        ],
+        "firstTableName": "items_carrito",
+        "firstSchemaName": "public",
+        "firstRelation": "*",
+        "secondFieldNames": [
+          "id"
+        ],
+        "secondTableName": "productos",
+        "secondSchemaName": "public",
+        "secondRelation": "1",
+        "checkPoints": []
+      },
+      {
+        "firstFieldNames": [
+          "comprador_id"
+        ],
+        "firstTableName": "pedidos",
+        "firstSchemaName": "public",
+        "firstRelation": "*",
+        "secondFieldNames": [
+          "id"
+        ],
+        "secondTableName": "usuarios",
+        "secondSchemaName": "public",
+        "secondRelation": "1",
+        "checkPoints": []
+      },
+      {
+        "firstFieldNames": [
+          "vendedor_id"
+        ],
+        "firstTableName": "pedidos",
+        "firstSchemaName": "public",
+        "firstRelation": "*",
+        "secondFieldNames": [
+          "id"
+        ],
+        "secondTableName": "usuarios",
+        "secondSchemaName": "public",
+        "secondRelation": "1",
+        "checkPoints": []
+      },
+      {
+        "firstFieldNames": [
+          "tienda_id"
+        ],
+        "firstTableName": "pedidos",
+        "firstSchemaName": "public",
+        "firstRelation": "*",
+        "secondFieldNames": [
+          "id"
+        ],
+        "secondTableName": "tiendas",
+        "secondSchemaName": "public",
+        "secondRelation": "1",
+        "checkPoints": []
+      },
+      {
+        "firstFieldNames": [
+          "pedido_id"
+        ],
+        "firstTableName": "detalles_pedido",
+        "firstSchemaName": "public",
+        "firstRelation": "*",
+        "secondFieldNames": [
+          "id"
+        ],
+        "secondTableName": "pedidos",
+        "secondSchemaName": "public",
+        "secondRelation": "1",
+        "checkPoints": []
+      },
+      {
+        "firstFieldNames": [
+          "producto_id"
+        ],
+        "firstTableName": "detalles_pedido",
+        "firstSchemaName": "public",
+        "firstRelation": "*",
+        "secondFieldNames": [
+          "id"
+        ],
+        "secondTableName": "productos",
+        "secondSchemaName": "public",
+        "secondRelation": "1",
+        "checkPoints": []
+      },
+      {
+        "firstFieldNames": [
+          "comprador_id"
+        ],
+        "firstTableName": "conversaciones",
+        "firstSchemaName": "public",
+        "firstRelation": "*",
+        "secondFieldNames": [
+          "id"
+        ],
+        "secondTableName": "usuarios",
+        "secondSchemaName": "public",
+        "secondRelation": "1",
+        "checkPoints": []
+      },
+      {
+        "firstFieldNames": [
+          "vendedor_id"
+        ],
+        "firstTableName": "conversaciones",
+        "firstSchemaName": "public",
+        "firstRelation": "*",
+        "secondFieldNames": [
+          "id"
+        ],
+        "secondTableName": "usuarios",
+        "secondSchemaName": "public",
+        "secondRelation": "1",
+        "checkPoints": []
+      },
+      {
+        "firstFieldNames": [
+          "producto_id"
+        ],
+        "firstTableName": "conversaciones",
+        "firstSchemaName": "public",
+        "firstRelation": "*",
+        "secondFieldNames": [
+          "id"
+        ],
+        "secondTableName": "productos",
+        "secondSchemaName": "public",
+        "secondRelation": "1",
+        "checkPoints": []
+      },
+      {
+        "firstFieldNames": [
+          "conversacion_id"
+        ],
+        "firstTableName": "mensajes",
+        "firstSchemaName": "public",
+        "firstRelation": "*",
+        "secondFieldNames": [
+          "id"
+        ],
+        "secondTableName": "conversaciones",
+        "secondSchemaName": "public",
+        "secondRelation": "1",
+        "checkPoints": []
+      },
+      {
+        "firstFieldNames": [
+          "remitente_id"
+        ],
+        "firstTableName": "mensajes",
+        "firstSchemaName": "public",
+        "firstRelation": "*",
+        "secondFieldNames": [
+          "id"
+        ],
+        "secondTableName": "usuarios",
+        "secondSchemaName": "public",
+        "secondRelation": "1",
+        "checkPoints": []
+      },
+      {
+        "firstFieldNames": [
+          "denunciante_id"
+        ],
+        "firstTableName": "reportes",
+        "firstSchemaName": "public",
+        "firstRelation": "*",
+        "secondFieldNames": [
+          "id"
+        ],
+        "secondTableName": "usuarios",
+        "secondSchemaName": "public",
+        "secondRelation": "1",
+        "checkPoints": []
+      },
+      {
+        "firstFieldNames": [
+          "producto_id"
+        ],
+        "firstTableName": "reportes",
+        "firstSchemaName": "public",
+        "firstRelation": "*",
+        "secondFieldNames": [
+          "id"
+        ],
+        "secondTableName": "productos",
+        "secondSchemaName": "public",
+        "secondRelation": "1",
+        "checkPoints": []
+      }
+    ]
+  },
+  "views": {}
+}
