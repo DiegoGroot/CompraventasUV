@@ -30,6 +30,9 @@ func main() {
 	}))
 
 	routes.SetupRoutes(r)
+	
+	// Servir la carpeta "uploads" como archivos estáticos
+	r.Static("/uploads", "./uploads")
 
 	port := os.Getenv("PORT")
 	if port == "" {

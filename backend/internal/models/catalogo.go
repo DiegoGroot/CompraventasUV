@@ -14,3 +14,11 @@ type Facultad struct {
 }
 
 func (Facultad) TableName() string { return "facultades" }
+
+type Categoria struct {
+	ID          uint   `gorm:"primaryKey"`
+	Nombre      string `gorm:"unique;not null"`
+	Descripcion string
+}
+
+func (Categoria) TableName() string { return "categorias" }

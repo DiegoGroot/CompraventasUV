@@ -32,6 +32,21 @@ func SetupRoutes(r *gin.Engine) {
 					"rol":        rol,
 				})
 			})
+			// --- CRUD Tiendas ---
+			privadas.POST("/tiendas", controllers.CrearTienda)
+			privadas.GET("/mis-tiendas", controllers.ObtenerMisTiendas)
+			privadas.PUT("/tiendas/:id", controllers.ActualizarTienda)
+			privadas.DELETE("/tiendas/:id", controllers.EliminarTienda)
+
+			// --- CRUD Productos ---
+			privadas.POST("/productos", controllers.CrearProducto)
+			privadas.GET("/productos", controllers.ObtenerProductos)
+			privadas.GET("/productos/:id", controllers.ObtenerProductoPorID)
+			privadas.PUT("/productos/:id", controllers.ActualizarProducto)
+			privadas.DELETE("/productos/:id", controllers.EliminarProducto)
+
+			// --- Subida de archivos ---
+			privadas.POST("/upload", controllers.SubirImagen)
 		}
 	}
 }
