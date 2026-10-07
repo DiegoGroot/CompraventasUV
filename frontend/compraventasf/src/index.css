@@ -1,13 +1,13 @@
 :root {
-  font-family: 'Avenir Next', Avenir, 'Segoe UI', sans-serif;
-  color: #26382f;
-  background: #f7f8f4;
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  font-weight: 400;
-  color-scheme: light;
+  --green: #1b5e40;
+  --green-soft: #eaf2ee;
+  --bg: #f7f6f2;
+  --surface: #ffffff;
+  --border: #e7e5df;
+  --text: #17171a;
+  --muted: #6e6e68;
+  --font-body: 'Outfit', system-ui, sans-serif;
+  --font-title: 'Playfair Display', serif;
 }
 
 * {
@@ -23,6 +23,7 @@ body {
   min-width: 320px;
   min-height: 100vh;
   margin: 0;
+  font-family: 'Outfit', sans-serif;
 }
 
 button,
