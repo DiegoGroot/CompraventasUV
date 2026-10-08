@@ -47,6 +47,29 @@ func SetupRoutes(r *gin.Engine) {
 
 			// --- Subida de archivos ---
 			privadas.POST("/upload", controllers.SubirImagen)
+
+            // --- Pedidos ---
+			privadas.POST("/pedidos/directo", controllers.RealizarCompraDirecta)
+			privadas.GET("/mis-compras", controllers.ObtenerMisCompras)
+			privadas.GET("/mis-ventas", controllers.ObtenerMisVentas)
+			privadas.PATCH("/mis-ventas/:id/estado", controllers.ActualizarEstadoPedido) 
+
+            // --- Carrito ---
+			privadas.POST("/carrito", controllers.AgregarAlCarrito)
+			privadas.GET("/carrito", controllers.ObtenerCarrito)
+			privadas.DELETE("/carrito/:id", controllers.EliminarDelCarrito)
+			privadas.DELETE("/carrito", controllers.VaciarCarrito)
+			privadas.POST("/carrito/checkout", controllers.CheckoutCarrito) 
+
+			// --- Favoritos ---
+			privadas.POST("/favoritos", controllers.AgregarFavorito)
+			privadas.GET("/favoritos", controllers.ObtenerFavoritos)
+			privadas.DELETE("/favoritos/:producto_id", controllers.EliminarFavorito)
+
+			// --- Mensajería ---
+			privadas.POST("/mensajes", controllers.EnviarMensaje)
+			privadas.GET("/mensajes/inbox", controllers.ObtenerBandejaEntrada) // <-- AÑADIR ESTA AQUÍ
+			privadas.GET("/mensajes/:receptor_id/:producto_id", controllers.ObtenerHistorialChat)
 		}
 	}
 }
