@@ -76,6 +76,54 @@ CREATE TABLE imagenes_producto (
     peso_mb DECIMAL(5,2),
     es_principal BOOLEAN DEFAULT false
 );
+
+-- Crear estado del pedido
+CREATE TYPE estado_pedido AS ENUM ('pendiente', 'confirmado', 'cancelado');
+
+-- 1. Tabla principal de Pedidos
+CREATE TABLE pedidos (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    comprador_id UUID NOT NULL REFERENCES usuarios(id),
+    vendedor_id UUID NOT NULL REFERENCES usuarios(id),
+    tienda_id UUID REFERENCES tiendas(id), -- NULL si es vendedor independiente
+    total DECIMAL(10,2) NOT NULL,
+    estado estado_pedido DEFAULT 'pendiente',
+    fecha_pedido TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    es_compra_directa BOOLEAN DEFAULT false
+);
+
+-- 2. Tabla de Detalles (Los productos dentro del pedido)
+CREATE TABLE detalles_pedido (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    pedido_id UUID NOT NULL REFERENCES pedidos(id) ON DELETE CASCADE,
+    producto_id UUID NOT NULL REFERENCES productos(id),
+    cantidad INT NOT NULL,
+    precio_unitario DECIMAL(10,2) NOT NULL -- Congela el precio al momento de la compra
+);
+CREATE TABLE favoritos (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    usuario_id UUID NOT NULL REFERENCES usuarios(id) ON DELETE CASCADE,
+    producto_id UUID NOT NULL REFERENCES productos(id) ON DELETE CASCADE,
+    fecha_agregado TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(usuario_id, producto_id)
+);
+CREATE TABLE carrito_items (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    usuario_id UUID NOT NULL REFERENCES usuarios(id) ON DELETE CASCADE,
+    producto_id UUID NOT NULL REFERENCES productos(id) ON DELETE CASCADE,
+    cantidad INT NOT NULL DEFAULT 1,
+    fecha_agregado TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(usuario_id, producto_id)
+);
+CREATE TABLE mensajes (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    remitente_id UUID NOT NULL REFERENCES usuarios(id) ON DELETE CASCADE,
+    receptor_id UUID NOT NULL REFERENCES usuarios(id) ON DELETE CASCADE,
+    producto_id UUID NOT NULL REFERENCES productos(id) ON DELETE CASCADE,
+    contenido TEXT NOT NULL,
+    leido BOOLEAN DEFAULT false,
+    fecha_envio TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
 -- ==========================================
 -- DATOS DE PRUEBA (SEEDERS)
 -- ==========================================

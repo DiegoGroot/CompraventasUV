@@ -1,10 +1,7 @@
-// ==========================================
-// ENUMS (Dominios de datos)
-// ==========================================
+// Enum definitions
 Enum estado_usuario {
-  inactivo
   activo
-  suspendido
+  inactivo
 }
 
 Enum rol_usuario {
@@ -18,12 +15,7 @@ Enum estado_producto {
   reservado
   vendido
   oculto
-}
-
-Enum estado_reporte {
-  pendiente
-  revisado
-  resuelto
+  agotado
 }
 
 Enum estado_pedido {
@@ -32,194 +24,123 @@ Enum estado_pedido {
   cancelado
 }
 
-// ==========================================
-// CATÁLOGOS DEL SISTEMA (NUEVO)
-// ==========================================
-
+// Catálogos e Infraestructura Base
 Table regiones {
-  id serial [pk]
-  nombre varchar [unique, not null, note: 'Ej. Xalapa, Orizaba-Córdoba, Veracruz']
+  id int [pk, increment]
+  nombre varchar(100) [not null]
 }
 
 Table facultades {
-  id serial [pk]
-  region_id int [not null]
-  nombre varchar [not null, note: 'Ej. FCQ, FEI, FIME']
+  id int [pk, increment]
+  nombre varchar(100) [not null]
+  region_id int [ref: > regiones.id]
 }
 
 Table categorias {
-  id serial [pk]
-  nombre varchar [unique, not null]
+  id int [pk, increment]
+  nombre varchar(100) [unique, not null]
   descripcion text
 }
 
-// ==========================================
-// TABLAS PRINCIPALES
-// ==========================================
-
+// Usuarios y Tiendas
 Table usuarios {
-  id uuid [pk]
-  username varchar [unique, not null]
-  correo_institucional varchar [unique, not null, note: 'Debe pertenecer al dominio UV']
-  password_hash varchar [not null]
+  id uuid [pk, default: `uuid_generate_v4()`]
+  username varchar(50) [unique, not null]
+  correo_institucional varchar(255) [unique, not null]
+  password_hash varchar(255) [not null]
+  region_id int [not null, ref: > regiones.id]
+  facultad_id int [not null, ref: > facultades.id]
   rol rol_usuario [default: 'estudiante']
   estado estado_usuario [default: 'inactivo']
   fecha_registro timestamp [default: `now()`]
 }
 
-Table tokens_verificacion {
-  id uuid [pk]
-  usuario_id uuid [not null]
-  codigo_otp varchar(6) [not null]
-  fecha_expiracion timestamp [not null]
-}
-
 Table tiendas {
-  id uuid [pk]
-  vendedor_id uuid [not null]
-  categoria_principal_id int [not null]
-  region_id int [not null, note: 'Ubicación base de la tienda']
-  facultad_id int [not null]
-  nombre varchar [not null]
+  id uuid [pk, default: `uuid_generate_v4()`]
+  vendedor_id uuid [not null, ref: > usuarios.id]
+  categoria_principal_id int [not null, ref: > categorias.id]
+  region_id int [not null, ref: > regiones.id]
+  facultad_id int [not null, ref: > facultades.id]
+  nombre varchar(255) [not null]
   descripcion text
+  imagen_link varchar(255) [note: 'Opcional (NULL)']
   fecha_creacion timestamp [default: `now()`]
 }
 
+// Productos e Imágenes
 Table productos {
-  id uuid [pk]
-  vendedor_id uuid [not null]
-  tienda_id uuid [note: 'Nulo si es venta independiente']
-  categoria_id int [not null]
-  region_id int [not null, note: 'Ubicación de entrega del producto']
-  facultad_id int [not null]
-  nombre varchar [not null]
+  id uuid [pk, default: `uuid_generate_v4()`]
+  vendedor_id uuid [not null, ref: > usuarios.id]
+  tienda_id uuid [ref: > tiendas.id, note: 'Opcional. NULL si es independiente']
+  categoria_id int [not null, ref: > categorias.id]
+  region_id int [not null, ref: > regiones.id]
+  facultad_id int [not null, ref: > facultades.id]
+  nombre varchar(255) [not null]
   descripcion text
   precio decimal(10,2) [not null]
-  stock int [not null, default: 1]
+  stock int [default: 1]
   estado estado_producto [default: 'disponible']
   fecha_publicacion timestamp [default: `now()`]
 }
 
 Table imagenes_producto {
-  id uuid [pk]
-  producto_id uuid [not null]
-  url_imagen varchar [not null]
+  id uuid [pk, default: `uuid_generate_v4()`]
+  producto_id uuid [not null, ref: > productos.id]
+  url_imagen varchar(255) [not null]
   peso_mb decimal(5,2)
   es_principal boolean [default: false]
 }
 
-// ==========================================
-// INTERACCIÓN Y COMPRAS
-// ==========================================
-
-Table favoritos {
-  usuario_id uuid [not null]
-  producto_id uuid [not null]
-  fecha_agregado timestamp [default: `now()`]
-  
-  indexes {
-    (usuario_id, producto_id) [pk]
-  }
-}
-
-Table carritos {
-  id uuid [pk]
-  comprador_id uuid [unique, not null]
-  fecha_actualizacion timestamp [default: `now()`]
-}
-
-Table items_carrito {
-  id uuid [pk]
-  carrito_id uuid [not null]
-  producto_id uuid [not null]
-  cantidad int [not null, default: 1]
-}
-
+// Transacciones y Pedidos
 Table pedidos {
-  id uuid [pk]
-  comprador_id uuid [not null]
-  vendedor_id uuid [not null]
-  tienda_id uuid
+  id uuid [pk, default: `uuid_generate_v4()`]
+  comprador_id uuid [not null, ref: > usuarios.id]
+  vendedor_id uuid [not null, ref: > usuarios.id]
+  tienda_id uuid [ref: > tiendas.id]
   total decimal(10,2) [not null]
   estado estado_pedido [default: 'pendiente']
-  fecha_pedido timestamp [default: `now()`]
   es_compra_directa boolean [default: false]
+  fecha_pedido timestamp [default: `now()`]
 }
 
 Table detalles_pedido {
-  id uuid [pk]
-  pedido_id uuid [not null]
-  producto_id uuid [not null]
+  id uuid [pk, default: `uuid_generate_v4()`]
+  pedido_id uuid [not null, ref: > pedidos.id]
+  producto_id uuid [not null, ref: > productos.id]
   cantidad int [not null]
-  precio_unitario decimal(10,2) [not null]
+  precio_unitario decimal(10,2) [not null, note: 'Congelado al momento de compra']
 }
 
-// ==========================================
-// COMUNICACIÓN Y MODERACIÓN
-// ==========================================
+// Interacción de Usuarios
+Table carrito_items {
+  id uuid [pk, default: `uuid_generate_v4()`]
+  usuario_id uuid [not null, ref: > usuarios.id]
+  producto_id uuid [not null, ref: > productos.id]
+  cantidad int [default: 1]
+  fecha_agregado timestamp [default: `now()`]
+  
+  indexes {
+    (usuario_id, producto_id) [unique]
+  }
+}
 
-Table conversaciones {
-  id uuid [pk]
-  comprador_id uuid [not null]
-  vendedor_id uuid [not null]
-  producto_id uuid [not null]
-  fecha_inicio timestamp [default: `now()`]
+Table favoritos {
+  id uuid [pk, default: `uuid_generate_v4()`]
+  usuario_id uuid [not null, ref: > usuarios.id]
+  producto_id uuid [not null, ref: > productos.id]
+  fecha_agregado timestamp [default: `now()`]
+
+  indexes {
+    (usuario_id, producto_id) [unique]
+  }
 }
 
 Table mensajes {
-  id uuid [pk]
-  conversacion_id uuid [not null]
-  remitente_id uuid [not null]
+  id uuid [pk, default: `uuid_generate_v4()`]
+  remitente_id uuid [not null, ref: > usuarios.id]
+  receptor_id uuid [not null, ref: > usuarios.id]
+  producto_id uuid [not null, ref: > productos.id]
   contenido text [not null]
+  leido boolean [default: false]
   fecha_envio timestamp [default: `now()`]
 }
-
-Table reportes {
-  id uuid [pk]
-  denunciante_id uuid [not null]
-  producto_id uuid [not null]
-  motivo text [not null]
-  estado estado_reporte [default: 'pendiente']
-  fecha_reporte timestamp [default: `now()`]
-}
-
-// ==========================================
-// RELACIONES (Foreign Keys)
-// ==========================================
-
-Ref: facultades.region_id > regiones.id
-Ref: tokens_verificacion.usuario_id > usuarios.id [delete: cascade]
-
-Ref: tiendas.vendedor_id > usuarios.id [delete: cascade]
-Ref: tiendas.categoria_principal_id > categorias.id
-Ref: tiendas.region_id > regiones.id
-Ref: tiendas.facultad_id > facultades.id
-
-Ref: productos.vendedor_id > usuarios.id [delete: cascade]
-Ref: productos.tienda_id > tiendas.id [delete: cascade]
-Ref: productos.categoria_id > categorias.id
-Ref: productos.region_id > regiones.id
-Ref: productos.facultad_id > facultades.id
-Ref: imagenes_producto.producto_id > productos.id [delete: cascade]
-
-Ref: favoritos.usuario_id > usuarios.id [delete: cascade]
-Ref: favoritos.producto_id > productos.id [delete: cascade]
-
-Ref: carritos.comprador_id - usuarios.id [delete: cascade]
-Ref: items_carrito.carrito_id > carritos.id [delete: cascade]
-Ref: items_carrito.producto_id > productos.id [delete: cascade]
-
-Ref: pedidos.comprador_id > usuarios.id
-Ref: pedidos.vendedor_id > usuarios.id
-Ref: pedidos.tienda_id > tiendas.id
-Ref: detalles_pedido.pedido_id > pedidos.id [delete: cascade]
-Ref: detalles_pedido.producto_id > productos.id
-
-Ref: conversaciones.comprador_id > usuarios.id
-Ref: conversaciones.vendedor_id > usuarios.id
-Ref: conversaciones.producto_id > productos.id
-Ref: mensajes.conversacion_id > conversaciones.id [delete: cascade]
-Ref: mensajes.remitente_id > usuarios.id
-
-Ref: reportes.denunciante_id > usuarios.id
-Ref: reportes.producto_id > productos.id [delete: cascade]
