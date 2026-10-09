@@ -1,0 +1,81 @@
+.puestos-banner {
+  padding: 36px 40px;
+  margin-bottom: 24px;
+  border-radius: 28px;
+  background: var(--green);
+  color: #fff;
+}
+.puestos-banner h2 {
+  margin: 0 0 8px;
+  font-family: var(--font-title);
+  font-size: 36px;
+}
+.puestos-banner p {
+  margin: 0;
+  max-width: 640px;
+  font-size: 19px;
+  line-height: 1.5;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.puestos-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  gap: 24px;
+  align-items: start;
+}
+
+.puesto-card {
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 28px;
+  background: var(--surface);
+}
+
+.puesto-card__cover { position: relative; height: 175px; background: var(--green-soft); }
+.puesto-card__cover img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.puesto-card__tag {
+  position: absolute;
+  top: 14px;
+  left: 14px;
+  padding: 6px 14px;
+  border-radius: 999px;
+  background: var(--green-soft);
+  color: var(--green);
+  font-weight: 600;
+}
+
+.puesto-card__body { padding: 22px 24px 28px; }
+
+.puesto-card__owner { display: flex; align-items: center; gap: 12px; }
+.puesto-card__owner h3 { margin: 0; font-size: 20px; font-weight: 600; }
+.puesto-card__owner p { margin: 2px 0 0; color: var(--muted); }
+.puesto-card__avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  object-fit: cover;
+  background: var(--green-soft);
+  flex-shrink: 0;
+}
+
+.puesto-card__meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 16px 0;
+  color: var(--muted);
+  white-space: nowrap;
+}
+.puesto-card__rating { display: flex; align-items: center; gap: 4px; color: #b8860b; }
+.puesto-card__rating span { margin-left: 4px; color: var(--muted); }
+
+.puesto-card__thumbs { display: flex; gap: 10px; }
+.puesto-card__thumbs img {
+  flex: 1;
+  min-width: 0;
+  aspect-ratio: 1;
+  border-radius: 16px;
+  object-fit: cover;
+  background: var(--green-soft);
+}

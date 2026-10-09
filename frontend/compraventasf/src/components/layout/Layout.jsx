@@ -4,6 +4,7 @@ import Sidebar from './Sidebar.jsx'
 import Topbar from './Topbar.jsx'
 import AuthDialog from '../auth/AuthDialog.jsx'
 import './Layout.css'
+import { usePreferences } from '../../context/PreferencesContext.jsx'
 
 const TITLES = {
   '/': 'Inicio',
@@ -18,11 +19,12 @@ const TITLES = {
 }
 
 export default function Layout() {
+  const { collapsed } = usePreferences()
   const { pathname } = useLocation()
   const [authMode, setAuthMode] = useState(null)
 
   return (
-    <div className="layout">
+    <div className={`layout ${collapsed ? 'is-collapsed' : ''}`}>
       <Sidebar onPublish={() => setAuthMode('register')} />
       <div className="layout__main">
         <Topbar title={TITLES[pathname] ?? ''} onSignIn={() => setAuthMode('login')} />

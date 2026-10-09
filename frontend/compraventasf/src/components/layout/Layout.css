@@ -152,3 +152,29 @@
   cursor: pointer;
 }
 .topbar__signin:hover { background: var(--green-soft); }
+
+.sidebar { transition: width 0.2s ease; }
+.is-collapsed .sidebar { width: 88px; }
+
+.is-collapsed .sidebar__brand > div:not(.sidebar__logo),
+.is-collapsed .sidebar__label,
+.is-collapsed .sidebar__user > div:not(.avatar) { display: none; }
+
+.is-collapsed .sidebar__brand,
+.is-collapsed .sidebar__user { justify-content: center; padding-inline: 0; }
+.is-collapsed .sidebar__link { justify-content: center; padding-inline: 0; }
+.is-collapsed .sidebar__publish { gap: 0; }
+
+.topbar__left { display: flex; align-items: center; gap: 14px; }
+.topbar__toggle {
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface);
+  color: var(--muted);
+  cursor: pointer;
+}
+.topbar__toggle:hover { background: var(--green-soft); color: var(--green); }
