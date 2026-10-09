@@ -26,30 +26,6 @@ const css = `
 .lg .btn-back{background:none;border:none;color:var(--muted);font:inherit;font-size:.85rem;cursor:pointer;margin-top:12px;text-decoration:underline;width:100%}
 `;
 
-// Simulación de envío del correo desde el Backend
-async function enviarCodigoACorreo(email, password) {
-  await new Promise((r) => setTimeout(r, 600));
-  
-  // Validar formato de correo UV
-  const esCorreoUV = email.endsWith("@uv.mx") || email.endsWith("@estudiantes.uv.mx");
-  if (!esCorreoUV) {
-    return { ok: false, message: "Debes ingresar tu correo institucional UV (@uv.mx o @estudiantes.uv.mx)." };
-  }
-  
-  // Simulación exitosa: el backend enviaría el correo aquí
-  return { ok: true, mensaje: `Código enviado a ${email}` };
-}
-
-// Simulación de verificación del código ingresado por el usuario
-async function verificarCodigoAcceso(code) {
-  await new Promise((r) => setTimeout(r, 500));
-  // Para pruebas en desarrollo, el número correcto de acceso será 123456
-  if (code === "123456") return { ok: true };
-  return { ok: false, message: "El número de autenticación es incorrecto o ha caducado." };
-}
-
-import { enviarCodigoCorreo, verificarCodigo } from "../../services/authService";
-
 export default function Login({ 
   onSendCode = enviarCodigoCorreo, 
   onVerifyCode = verificarCodigo 
@@ -57,27 +33,27 @@ export default function Login({
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [authCode, setAuthCode] = useState("");
-  const [step, setStep] = useState(1); // 1: Login, 2: Código de correo, 3: Sesión Iniciada
+  const [step, setStep] = useState(1); // 1: Login, 2: Código 2FA, 3: Éxito
   const [showPassword, setShowPassword] = useState(false);
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
   const [user, setUser] = useState(null);
 
-  // Paso 1: Validar datos y solicitar envío del código al correo
   async function handleStep1Submit() {
-    const e = {};
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
-      e.email = "Escribe un correo válido.";
-    }
-    if (password.length < 6) {
-      e.password = "La contraseña debe tener al menos 6 caracteres.";
-    }
+   const e = {};
+const cleanEmail = email.trim().toLowerCase();
+const uvEmailRegex = /^[a-zA-Z0-9._%+-]+@(estudiantes\.)?uv\.mx$/;
+
+if (!uvEmailRegex.test(cleanEmail)) {
+  e.email = "Escribe un correo institucional válido (@uv.mx o @estudiantes.uv.mx).";
+}
+    if (password.length < 6) e.password = "La contraseña debe tener al menos 6 caracteres.";
     setErrors(e);
     if (Object.keys(e).length) return;
 
     setLoading(true);
     try {
-      const resp = await onLogin(email.trim(), password);
+      const resp = await onSendCode(email.trim(), password);
       if (resp.ok) {
         setStep(2);
         setErrors({});
@@ -85,21 +61,20 @@ export default function Login({
         setErrors({ email: resp.message || "Credenciales incorrectas." });
       }
     } catch {
-      setErrors({ password: "No se pudo conectar con el servidor. Inténtalo de nuevo." });
+      setErrors({ password: "Error de conexión." });
     }
     setLoading(false);
   }
 
-  // Paso 2: Validar el número de autenticación ingresado
   async function handleStep2Submit() {
     if (authCode.trim().length !== 6) {
-      setErrors({ code: "El número de autenticación debe tener 6 dígitos." });
+      setErrors({ code: "Debe ser de 6 dígitos." });
       return;
     }
 
     setLoading(true);
     try {
-      const resp = await onVerifyCode(authCode.trim());
+      const resp = await onVerifyCode(email.trim(), authCode.trim());
       if (resp.ok) {
         setUser(email.trim());
         setStep(3);
@@ -107,13 +82,10 @@ export default function Login({
         setErrors({ code: resp.message || "Número incorrecto." });
       }
     } catch {
-      setErrors({ code: "Error al verificar el número. Inténtalo de nuevo." });
+      setErrors({ code: "Error de verificación." });
     }
     setLoading(false);
   }
-
-  const onEnterStep1 = (ev) => ev.key === "Enter" && handleStep1Submit();
-  const onEnterStep2 = (ev) => ev.key === "Enter" && handleStep2Submit();
 
   return (
     <div className="lg">
@@ -123,29 +95,15 @@ export default function Login({
           <section className="ok">
             <h1>Compraventas UV</h1>
             <p className="sub">Bienvenido(a), <strong>{user}</strong></p>
-            <p className="sub">Has iniciado sesión correctamente.</p>
-            <button
-              type="button"
-              onClick={() => {
-                setUser(null);
-                setPassword("");
-                setAuthCode("");
-                setStep(1);
-              }}
-            >
+            <button type="button" onClick={() => { setStep(1); setAuthCode(""); }}>
               Cerrar sesión
             </button>
           </section>
         ) : step === 2 ? (
           <section>
             <h1>Autenticación</h1>
-            <p className="sub">
-              Hemos enviado un número de autenticación de 6 dígitos a tu correo institucional:
-            </p>
-            
-            <div className="notice-box">
-              📧 <strong>{email}</strong>
-            </div>
+            <p className="sub">Código enviado a tu correo institucional:</p>
+            <div className="notice-box">📧 <strong>{email}</strong></div>
 
             <label htmlFor="authCode">Número de autenticación</label>
             <input
@@ -156,46 +114,29 @@ export default function Login({
               placeholder="123456"
               value={authCode}
               onChange={(ev) => setAuthCode(ev.target.value)}
-              onKeyDown={onEnterStep2}
               aria-invalid={!!errors.code}
             />
             <p className="err" role="alert">{errors.code}</p>
 
-            <button
-              className="submit"
-              type="button"
-              onClick={handleStep2Submit}
-              disabled={loading}
-            >
-              {loading ? "Verificando..." : "Ingresar a Compraventas UV"}
+            <button className="submit" type="button" onClick={handleStep2Submit} disabled={loading}>
+              {loading ? "Verificando..." : "Ingresar"}
             </button>
-
-            <button
-              type="button"
-              className="btn-back"
-              onClick={() => {
-                setStep(1);
-                setAuthCode("");
-                setErrors({});
-              }}
-            >
-              ← Volver e ingresar otro correo
+            <button type="button" className="btn-back" onClick={() => setStep(1)}>
+              ← Volver
             </button>
           </section>
         ) : (
           <section>
             <h1>Iniciar sesión</h1>
-            <p className="sub">Ingresa a la plataforma Compraventas UV con tu cuenta institucional.</p>
+            <p className="sub">Plataforma Compraventas UV</p>
 
             <label htmlFor="email">Correo institucional</label>
             <input
               id="email"
               type="email"
-              autoComplete="username"
               placeholder="usuario@estudiantes.uv.mx"
               value={email}
               onChange={(ev) => setEmail(ev.target.value)}
-              onKeyDown={onEnterStep1}
               aria-invalid={!!errors.email}
             />
             <p className="err" role="alert">{errors.email}</p>
@@ -205,29 +146,18 @@ export default function Login({
               <input
                 id="pass"
                 type={showPassword ? "text" : "password"}
-                autoComplete="current-password"
                 value={password}
                 onChange={(ev) => setPassword(ev.target.value)}
-                onKeyDown={onEnterStep1}
                 aria-invalid={!!errors.password}
               />
-              <button
-                type="button"
-                onClick={() => setShowPassword((s) => !s)}
-                aria-label={showPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
-              >
+              <button type="button" onClick={() => setShowPassword((s) => !s)}>
                 {showPassword ? "Ocultar" : "Mostrar"}
               </button>
             </div>
             <p className="err" role="alert">{errors.password}</p>
 
-            <button
-              className="submit"
-              type="button"
-              onClick={handleStep1Submit}
-              disabled={loading}
-            >
-              {loading ? "Enviando código..." : "Enviar código de acceso"}
+            <button className="submit" type="button" onClick={handleStep1Submit} disabled={loading}>
+              {loading ? "Enviando..." : "Enviar código de acceso"}
             </button>
           </section>
         )}
