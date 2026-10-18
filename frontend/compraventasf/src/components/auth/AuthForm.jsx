@@ -4,7 +4,7 @@ import { catalogService } from '../../services/catalog.js'
 
 const universityEmailPattern = /^[^\s@]+@(?:estudiantes\.)?uv\.mx$/i
 
-export default function AuthForm({ initialMode = 'login' }) {
+export default function AuthForm({ initialMode = 'login', onSuccess }) {
   const [mode, setMode] = useState(initialMode)
   const [regions, setRegions] = useState([])
   const [faculties, setFaculties] = useState([])
@@ -70,10 +70,12 @@ export default function AuthForm({ initialMode = 'login' }) {
     try {
       if (isRegistering) {
         await authService.register({ username, email, password, regionId: selectedRegion, facultyId: selectedFaculty })
+        setMode('login')
+        setFeedback({ type: 'success', text: 'Cuenta creada. Ahora inicia sesión.' })
       } else {
-        await authService.login({ identifier, password })
+        const result = await authService.login({ identifier, password })
+        if (onSuccess) onSuccess(result.usuario)
       }
-      setFeedback({ type: 'success', text: isRegistering ? 'Cuenta creada correctamente.' : 'Sesión iniciada correctamente.' })
     } catch (error) {
       setFeedback({ type: 'error', text: error.message || 'No se pudo conectar con el servicio.' })
     } finally {

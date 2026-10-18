@@ -1,9 +1,11 @@
 import { useState } from 'react'
-import { Outlet, useLocation } from 'react-router-dom'
+import { Outlet, useLocation, useNavigate } from 'react-router-dom'
+import { useUser } from '../../context/UserContext.jsx'
 import Sidebar from './Sidebar.jsx'
 import Topbar from './Topbar.jsx'
 import AuthDialog from '../auth/AuthDialog.jsx'
 import './Layout.css'
+import { usePreferences } from '../../context/PreferencesContext.jsx'
 
 const TITLES = {
   '/': 'Inicio',
@@ -18,12 +20,16 @@ const TITLES = {
 }
 
 export default function Layout() {
+  const { collapsed } = usePreferences()
   const { pathname } = useLocation()
   const [authMode, setAuthMode] = useState(null)
+    const navigate = useNavigate()
+  const { user } = useUser()
+
 
   return (
-    <div className="layout">
-      <Sidebar onPublish={() => setAuthMode('register')} />
+    <div className={`layout ${collapsed ? 'is-collapsed' : ''}`}>
+    <Sidebar onPublish={() => (user ? navigate('/mi-espacio') : setAuthMode('login'))} />
       <div className="layout__main">
         <Topbar title={TITLES[pathname] ?? ''} onSignIn={() => setAuthMode('login')} />
         <main className="layout__content">

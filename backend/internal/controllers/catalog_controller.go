@@ -47,4 +47,19 @@ func GetFaculties(c *gin.Context) {
 		options = append(options, CatalogOption{ID: faculty.ID, Nombre: faculty.Nombre})
 	}
 	c.JSON(http.StatusOK, options)
+
+}
+
+func GetCategories(c *gin.Context) {
+	var categorias []models.Categoria
+	if err := config.DB.Order("nombre ASC").Find(&categorias).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "No se pudieron cargar las categorías"})
+		return
+	}
+
+	options := make([]CatalogOption, 0, len(categorias))
+	for _, cat := range categorias {
+		options = append(options, CatalogOption{ID: cat.ID, Nombre: cat.Nombre})
+	}
+	c.JSON(http.StatusOK, options)
 }

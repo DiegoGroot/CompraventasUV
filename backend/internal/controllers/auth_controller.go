@@ -10,7 +10,6 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"golang.org/x/crypto/bcrypt"
-
 )
 
 // Estructura para recibir el JSON de React
@@ -29,8 +28,10 @@ func Login(c *gin.Context) {
 
 	var usuario models.Usuario
 
-	// Buscar por correo institucional OR username
-	if err := config.DB.Where("correo_institucional = ? OR username = ?", req.Identificador, req.Identificador).First(&usuario).Error; err != nil {
+	// Buscar por correo institucional OR username (con región y facultad)
+	if err := config.DB.Preload("Region").Preload("Facultad").
+		Where("correo_institucional = ? OR username = ?", req.Identificador, req.Identificador).
+		First(&usuario).Error; err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Credenciales incorrectas"})
 		return
 	}
@@ -56,13 +57,18 @@ func Login(c *gin.Context) {
 		"mensaje": "Inicio de sesión exitoso",
 		"token":   tokenString,
 		"usuario": gin.H{
-			"id":       usuario.ID,
-			"username": usuario.Username,
-			"correo":   usuario.CorreoInstitucional,
-			"rol":      usuario.Rol,
+			"id":          usuario.ID,
+			"username":    usuario.Username,
+			"correo":      usuario.CorreoInstitucional,
+			"rol":         usuario.Rol,
+			"region":      usuario.Region.Nombre,
+			"facultad":    usuario.Facultad.Nombre,
+			"region_id":   usuario.RegionID,
+			"facultad_id": usuario.FacultadID,
 		},
 	})
 }
+
 // Estructura para recibir el JSON de registro desde React
 type RegisterRequest struct {
 	Username   string `json:"username" binding:"required,min=3"` // <-- Nuevo campo

@@ -3,8 +3,8 @@ import {
   House, Search, Store, Heart, ShoppingCart, ShoppingBag,
   MessageSquareText, Warehouse, User, Plus,
 } from 'lucide-react'
+import { useUser } from '../../context/UserContext.jsx'
 
-// Hardcodeado por ahora; luego vendrá del backend
 const NAV_ITEMS = [
   { to: '/', label: 'Inicio', icon: House },
   { to: '/explorar', label: 'Explorar', icon: Search },
@@ -17,9 +17,9 @@ const NAV_ITEMS = [
   { to: '/perfil', label: 'Perfil', icon: User },
 ]
 
-const USER = { initials: 'MR', name: 'María Ramírez', detail: 'Medicina · Xalapa' }
-
 export default function Sidebar({ onPublish }) {
+  const { user, initials } = useUser()
+
   return (
     <aside className="sidebar">
       <div className="sidebar__brand">
@@ -36,31 +36,33 @@ export default function Sidebar({ onPublish }) {
             key={to}
             to={to}
             end={to === '/'}
-            className={({ isActive }) =>
-              `sidebar__link ${isActive ? 'is-active' : ''}`
-            }
+            title={label}
+            className={({ isActive }) => `sidebar__link ${isActive ? 'is-active' : ''}`}
           >
             <span className="sidebar__icon">
               <Icon size={24} strokeWidth={1.6} />
               {badge && <span className="sidebar__badge">{badge}</span>}
             </span>
-            {label}
+            <span className="sidebar__label">{label}</span>
           </NavLink>
         ))}
       </nav>
 
       <div className="sidebar__bottom">
-        <button className="sidebar__publish" type="button" onClick={onPublish}>
-          <Plus size={22} /> Publicar
+        <button className="sidebar__publish" type="button" onClick={onPublish} title="Publicar">
+          <Plus size={22} />
+          <span className="sidebar__label">Publicar</span>
         </button>
 
-        <div className="sidebar__user">
-          <div className="avatar">{USER.initials}</div>
-          <div>
-            <strong>{USER.name}</strong>
-            <span>{USER.detail}</span>
+        {user && (
+          <div className="sidebar__user">
+            <div className="avatar">{initials}</div>
+            <div>
+              <strong>{user.nombre.split(' ').slice(0, 2).join(' ')}</strong>
+              <span>{user.facultad} · {user.campus}</span>
+            </div>
           </div>
-        </div>
+        )}
       </div>
     </aside>
   )

@@ -15,6 +15,7 @@ func SetupRoutes(r *gin.Engine) {
 		api.POST("/registro", controllers.Register)
 		api.GET("/regiones", controllers.GetRegions)
 		api.GET("/regiones/:regionID/facultades", controllers.GetFaculties)
+		api.GET("/categorias", controllers.GetCategories)
 
 		// RUTAS PRIVADAS (Requieren token JWT)
 		privadas := api.Group("/")
@@ -44,6 +45,10 @@ func SetupRoutes(r *gin.Engine) {
 			privadas.GET("/productos/:id", controllers.ObtenerProductoPorID)
 			privadas.PUT("/productos/:id", controllers.ActualizarProducto)
 			privadas.DELETE("/productos/:id", controllers.EliminarProducto)
+
+			// --- Mis publicaciones y estado ---
+			privadas.GET("/mis-productos", controllers.ObtenerMisProductos)
+			privadas.PATCH("/productos/:id/estado", controllers.CambiarEstadoProducto)
 
 			// --- Subida de archivos ---
 			privadas.POST("/upload", controllers.SubirImagen)

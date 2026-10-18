@@ -19,7 +19,7 @@ type CrearProductoReq struct {
 	Descripcion string   `json:"descripcion"`
 	Precio      float64  `json:"precio" binding:"required"`
 	Stock       int      `json:"stock"`
-	Imagenes    []string `json:"imagenes" binding:"required,min=1"` 
+	Imagenes    []string `json:"imagenes" binding:"required,min=1"`
 }
 
 func CrearProducto(c *gin.Context) {
@@ -91,6 +91,7 @@ func CrearProducto(c *gin.Context) {
 		"producto": nuevoProducto,
 	})
 }
+
 // GET /api/v1/productos (Catálogo principal con filtros)
 func ObtenerProductos(c *gin.Context) {
 	var productos []models.Producto
@@ -129,7 +130,6 @@ func ObtenerProductoPorID(c *gin.Context) {
 }
 
 // PUT /api/v1/productos/:id (Editar RF-007)
-// PUT /api/v1/productos/:id
 func ActualizarProducto(c *gin.Context) {
 	productoID := c.Param("id")
 	userIDStr := c.MustGet("userID").(string)
@@ -213,7 +213,7 @@ func EliminarProducto(c *gin.Context) {
 		return
 	}
 
-	// Gracias al "ON DELETE CASCADE" en PostgreSQL, al eliminar el producto 
+	// Gracias al "ON DELETE CASCADE" en PostgreSQL, al eliminar el producto
 	// se eliminarán automáticamente sus registros en "imagenes_producto".
 	if err := config.DB.Delete(&producto).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Error al eliminar el producto"})
@@ -221,4 +221,53 @@ func EliminarProducto(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"mensaje": "Producto y sus imágenes eliminados correctamente"})
+}
+
+// ==========================================
+// NUEVO: Mis publicaciones y cambio de estado
+// ==========================================
+
+// GET /api/v1/mis-productos (solo los productos del usuario logueado)
+func ObtenerMisProductos(c *gin.Context) {
+	userID := c.MustGet("userID").(string)
+
+	var productos []models.Producto
+	config.DB.Preload("Imagenes").
+		Where("vendedor_id = ?", userID).
+		Order("fecha_publicacion DESC").
+		Find(&productos)
+
+	c.JSON(http.StatusOK, productos)
+}
+
+type CambiarEstadoReq struct {
+	Estado string `json:"estado" binding:"required"`
+}
+
+// PATCH /api/v1/productos/:id/estado
+func CambiarEstadoProducto(c *gin.Context) {
+	userID := c.MustGet("userID").(string)
+
+	var req CambiarEstadoReq
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Estado requerido"})
+		return
+	}
+
+	switch req.Estado {
+	case "disponible", "reservado", "vendido", "oculto":
+	default:
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Estado no válido"})
+		return
+	}
+
+	res := config.DB.Model(&models.Producto{}).
+		Where("id = ? AND vendedor_id = ?", c.Param("id"), userID).
+		Update("estado", req.Estado)
+	if res.Error != nil || res.RowsAffected == 0 {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Producto no encontrado"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"mensaje": "Estado actualizado", "estado": req.Estado})
 }
