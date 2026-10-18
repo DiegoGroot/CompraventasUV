@@ -20,7 +20,7 @@ CREATE TYPE rol_usuario AS ENUM ('estudiante', 'profesor', 'administrador');
 -- 3. Crear la tabla usuarios vinculada a las regiones y facultades
 CREATE TABLE usuarios (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    username VARCHAR(50) UNIQUE NOT NULL;
+    username VARCHAR(50) UNIQUE NOT NULL,
     correo_institucional VARCHAR(255) UNIQUE NOT NULL,
     password_hash VARCHAR(255) NOT NULL,
     region_id INT NOT NULL REFERENCES regiones(id),

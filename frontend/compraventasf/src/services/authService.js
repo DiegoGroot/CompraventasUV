@@ -1,39 +1,27 @@
-// Ruta base de la API backend de Go
-const API_URL = "http://localhost:8080/api/auth";
+const API_URL = "http://localhost:8081/api/v1";
 
-// Petición para validar credenciales y solicitar el envío de correo
-export async function enviarCodigoCorreo(email, password) {
+async function peticion(ruta, opciones = {}) {
   try {
-    const response = await fetch(`${API_URL}/send-code`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password }),
-    });
-
-    const data = await response.json();
-    return { ok: response.ok, message: data.message };
+    const res = await fetch(`${API_URL}${ruta}`, opciones);
+    const data = await res.json().catch(() => ({}));
+    return { ok: res.ok, data, message: data.error || data.mensaje };
   } catch {
-    // Si aún no está corriendo el backend, simulamos una respuesta exitosa para probar
-    return { ok: true, message: "Código enviado" };
+    return { ok: false, data: {}, message: "No se pudo conectar con el servidor" };
   }
 }
 
-// Petición para verificar el código de 6 dígitos ingresado por el usuario
-export async function verificarCodigo(email, code) {
-  try {
-    const response = await fetch(`${API_URL}/verify-code`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, code }),
-    });
+const json = (body) => ({
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify(body),
+});
 
-    const data = await response.json();
-    return { ok: response.ok, token: data.token, message: data.message };
-  } catch {
-    // Si aún no está corriendo el backend, validamos el código de prueba '123456'
-    if (code === "123456") {
-      return { ok: true, message: "Acceso correcto" };
-    }
-    return { ok: false, message: "Código incorrecto. Usa 123456" };
-  }
-}
+export const login = (identificador, password) =>
+  peticion("/login", json({ identificador, password }));
+
+export const registrar = (datos) => peticion("/registro", json(datos));
+
+export const obtenerRegiones = () => peticion("/regiones");
+
+export const obtenerFacultades = (regionId) =>
+  peticion(`/regiones/${regionId}/facultades`);

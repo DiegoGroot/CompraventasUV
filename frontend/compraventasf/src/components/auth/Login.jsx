@@ -1,11 +1,9 @@
-import { useState } from "react";
-import { enviarCodigoCorreo, verificarCodigo } from "../../services/authService";
+import { useState, useEffect } from "react";
+import { login, registrar, obtenerRegiones, obtenerFacultades } from "../../services/authService";
 
 const css = `
 .auth-container{min-height:100vh;display:flex;background:#fff;font-family:"Segoe UI",system-ui,-apple-system,Roboto,sans-serif;box-sizing:border-box}
 .auth-container *{box-sizing:border-box}
-
-/* Columna Izquierda: Branding institucional */
 .auth-brand{flex:1;background:#0f6b5c;color:#fff;padding:48px;display:flex;flex-direction:column;justify-content:space-between;display:none}
 @media(min-width:900px){.auth-brand{display:flex}}
 .auth-brand-top{display:flex;align-items:center;gap:12px}
@@ -13,133 +11,126 @@ const css = `
 .auth-brand-title{font-size:2.8rem;line-height:1.2;font-weight:700;margin:0 0 16px;max-width:480px}
 .auth-brand-desc{font-size:1rem;line-height:1.5;color:rgba(255,255,255,0.85);max-width:420px;margin:0}
 .auth-brand-footer{font-size:.85rem;color:rgba(255,255,255,0.7)}
-
-/* Columna Derecha: Formularios */
 .auth-form-side{flex:1;display:flex;align-items:center;justify-content:center;padding:32px;overflow-y:auto}
 .auth-form-box{width:100%;max-width:420px}
 .auth-form-box h1{font-size:1.8rem;font-weight:700;color:#16302b;margin:0 0 8px}
 .auth-form-box .sub{color:#5d716c;font-size:.95rem;margin:0 0 24px}
-
 .auth-form-box label{display:block;font-weight:600;font-size:.85rem;color:#16302b;margin:16px 0 6px}
 .auth-form-box input,.auth-form-box select{width:100%;font:inherit;color:#16302b;background:#fff;border:1px solid #c9d6d3;border-radius:8px;padding:12px;font-size:.95rem}
 .auth-form-box input:focus-visible,.auth-form-box select:focus-visible{outline:2px solid #0f6b5c;outline-offset:1px}
 .auth-form-box input[aria-invalid="true"]{border-color:#b3261e}
-
 .auth-hint{font-size:.78rem;color:#5d716c;margin-top:4px}
 .auth-err{color:#b3261e;font-size:.82rem;margin-top:4px;min-height:1.2em}
-
 .auth-submit{width:100%;margin-top:24px;padding:12px;font:inherit;font-weight:600;background:#0f6b5c;color:#fff;border:0;border-radius:8px;cursor:pointer;transition:background .2s}
 .auth-submit:hover{background:#0b5145}
 .auth-submit:disabled{opacity:.6;cursor:default}
-
 .auth-link-btn{background:none;border:none;color:#0f6b5c;font:inherit;font-weight:600;cursor:pointer;padding:0;text-decoration:underline;margin-top:16px;display:inline-block}
 .auth-back-btn{background:none;border:none;color:#5d716c;font:inherit;cursor:pointer;margin-top:16px;display:block;width:100%;text-align:center;text-decoration:underline}
-
-.code-input{letter-spacing:10px;font-size:1.4rem;text-align:center;font-weight:bold}
-.notice-box{background:rgba(15,107,92,0.08);border-left:4px solid #0f6b5c;padding:12px;border-radius:4px;margin-bottom:20px;font-size:.9rem;color:#16302b}
+.auth-guest{width:100%;margin-top:12px;padding:12px;font:inherit;font-weight:600;background:#fff;color:#0f6b5c;border:2px solid #0f6b5c;border-radius:8px;cursor:pointer}
+.auth-guest:hover{background:rgba(15,107,92,.08)}
 `;
 
-export default function Login({ onLoginSuccess }) {
-  const [step, setStep] = useState("login"); // "login", "register", "verify", "success"
-  
-  // Estados para Login
+const getId = (o) => o.id ?? o.ID;
+const getNombre = (o) => o.nombre ?? o.Nombre;
+
+export default function Login({ onLoginSuccess, onGuest }) {
+  const [step, setStep] = useState("login"); // "login" | "register"
+
+  // Login
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
-  // Estados para Registro
-  const [fullName, setFullName] = useState("");
+  // Registro
+  const [username, setUsername] = useState("");
   const [regEmail, setRegEmail] = useState("");
-  const [region, setRegion] = useState("Orizaba-Córdoba");
-  const [faculty, setFaculty] = useState("Facultad de Ingeniería");
+  const [regiones, setRegiones] = useState([]);
+  const [facultades, setFacultades] = useState([]);
+  const [regionId, setRegionId] = useState("");
+  const [facultadId, setFacultadId] = useState("");
   const [regPassword, setRegPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
 
-  // Estado para verificación 2FA
-  const [authCode, setAuthCode] = useState("");
-  
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
 
-  // Manejar envío de Login (Paso 1)
+  useEffect(() => {
+    obtenerRegiones().then((r) => {
+      if (r.ok && Array.isArray(r.data)) setRegiones(r.data);
+    });
+  }, []);
+
+  useEffect(() => {
+    setFacultades([]);
+    setFacultadId("");
+    if (!regionId) return;
+    obtenerFacultades(regionId).then((r) => {
+      if (r.ok && Array.isArray(r.data)) setFacultades(r.data);
+    });
+  }, [regionId]);
+
   async function handleLoginSubmit(e) {
     e.preventDefault();
     const errs = {};
-    if (!email.trim().toLowerCase().endsWith("uv.mx")) {
-      errs.email = "Debe ser un correo institucional UV válido.";
-    }
-    if (password.length < 6) {
-      errs.password = "La contraseña debe tener al menos 6 caracteres.";
-    }
+    if (!email.trim()) errs.email = "Ingresa tu correo o usuario.";
+    if (!password) errs.password = "Ingresa tu contraseña.";
     setErrors(errs);
     if (Object.keys(errs).length) return;
 
-    setLoading(true);
-    try {
-      const resp = await enviarCodigoCorreo(email.trim(), password);
-      if (resp.ok) {
-        setStep("verify");
-        setErrors({});
-      } else {
-        setErrors({ email: resp.message || "Credenciales incorrectas." });
-      }
-    } catch {
-      setErrors({ password: "Error de conexión con el servidor." });
-    }
-    setLoading(false);
-  }
-
-  // Manejar verificación de código (Paso 2)
-  async function handleVerifySubmit(e) {
-    e.preventDefault();
-    if (authCode.trim().length !== 6) {
-      setErrors({ code: "El código debe constar de 6 dígitos." });
-      return;
-    }
+    // Los correos siempre en minúsculas; el username se deja tal cual
+    const ident = email.trim();
+    const identificador = ident.includes("@") ? ident.toLowerCase() : ident;
 
     setLoading(true);
-    try {
-      const resp = await verificarCodigo(email.trim(), authCode.trim());
-      if (resp.ok) {
-        if (onLoginSuccess) onLoginSuccess(email.trim());
-        setStep("success");
-      } else {
-        setErrors({ code: resp.message || "Código incorrecto." });
-      }
-    } catch {
-      setErrors({ code: "Error al verificar el código." });
-    }
+    const resp = await login(identificador, password);
     setLoading(false);
+
+    if (resp.ok) {
+      localStorage.setItem("token", resp.data.token);
+      if (onLoginSuccess) onLoginSuccess(resp.data.usuario);
+    } else {
+      setErrors({ password: resp.message || "Credenciales incorrectas." });
+    }
   }
 
-  // Manejar Registro
   async function handleRegisterSubmit(e) {
     e.preventDefault();
     const errs = {};
-    if (!fullName.trim()) errs.name = "Ingresa tu nombre completo.";
+    if (username.trim().length < 3) errs.name = "Mínimo 3 caracteres.";
     if (!regEmail.trim().toLowerCase().endsWith("uv.mx")) {
       errs.regEmail = "Debe ser un correo institucional UV (@uv.mx o @estudiantes.uv.mx).";
     }
-    if (regPassword.length < 8) errs.regPassword = "Mínimo 8 caracteres y un número.";
+    if (!regionId || !facultadId) errs.region = "Selecciona región y facultad.";
+    if (regPassword.length < 8) errs.regPassword = "Mínimo 8 caracteres.";
     if (regPassword !== confirmPassword) errs.confirm = "Las contraseñas no coinciden.";
-
     setErrors(errs);
     if (Object.keys(errs).length) return;
 
     setLoading(true);
-    // Simulamos registro exitoso y pasamos a login
-    setTimeout(() => {
-      setLoading(false);
+    const correo = regEmail.trim().toLowerCase();
+    const resp = await registrar({
+      username: username.trim(),
+      correo,
+      password: regPassword,
+      region_id: Number(regionId),
+      facultad_id: Number(facultadId),
+    });
+    setLoading(false);
+
+    if (resp.ok) {
       alert("¡Cuenta creada con éxito! Ahora puedes iniciar sesión.");
+      setEmail(correo);
+      setPassword("");
       setStep("login");
-      setEmail(regEmail);
-    }, 800);
+      setErrors({});
+    } else {
+      setErrors({ regEmail: resp.message || "No se pudo crear la cuenta." });
+    }
   }
 
   return (
     <div className="auth-container">
       <style>{css}</style>
 
-      {/* COLUMNA IZQUIERDA: Banner institucional idéntico al Figma */}
       <div className="auth-brand">
         <div className="auth-brand-top">
           <div className="auth-brand-badge">UV</div>
@@ -151,25 +142,21 @@ export default function Login({ onLoginSuccess }) {
             Compra y vende libros, material y comida dentro de la comunidad de la Universidad Veracruzana. Solo con cuenta institucional.
           </p>
         </div>
-        <div className="auth-brand-footer">
-          Lis de Veracruz: Arte, Ciencia, Luz
-        </div>
+        <div className="auth-brand-footer">Lis de Veracruz: Arte, Ciencia, Luz</div>
       </div>
 
-      {/* COLUMNA DERECHA: Dinámica de pantallas */}
       <div className="auth-form-side">
         <div className="auth-form-box">
-          
-          {/* PANTALLA 1: INICIAR SESIÓN */}
+
           {step === "login" && (
             <form onSubmit={handleLoginSubmit}>
               <h1>Bienvenido de vuelta</h1>
               <p className="sub">Inicia sesión con tu cuenta institucional.</p>
 
-              <label htmlFor="email">Correo institucional</label>
+              <label htmlFor="email">Correo institucional o usuario</label>
               <input
                 id="email"
-                type="email"
+                type="text"
                 placeholder="zs26003954@estudiantes.uv.mx"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
@@ -192,6 +179,12 @@ export default function Login({ onLoginSuccess }) {
                 {loading ? "Verificando..." : "Iniciar sesión"}
               </button>
 
+              {onGuest && (
+                <button type="button" className="auth-guest" onClick={onGuest}>
+                  Explorar sin iniciar sesión
+                </button>
+              )}
+
               <div style={{ textAlign: "center", marginTop: "16px" }}>
                 <span style={{ fontSize: "0.9rem", color: "#5d716c" }}>¿No tienes cuenta? </span>
                 <button type="button" className="auth-link-btn" onClick={() => { setStep("register"); setErrors({}); }}>
@@ -201,19 +194,18 @@ export default function Login({ onLoginSuccess }) {
             </form>
           )}
 
-          {/* PANTALLA 2: CREAR CUENTA (REGISTRO) */}
           {step === "register" && (
             <form onSubmit={handleRegisterSubmit}>
               <h1>Crea tu cuenta</h1>
               <p className="sub">Una sola cuenta para comprar y vender dentro de la UV.</p>
 
-              <label htmlFor="fullName">Nombre completo</label>
+              <label htmlFor="username">Nombre de usuario</label>
               <input
-                id="fullName"
+                id="username"
                 type="text"
-                placeholder="Jessica Ayelén"
-                value={fullName}
-                onChange={(e) => setFullName(e.target.value)}
+                placeholder="jessica_ayelen"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
               />
               <p className="auth-err">{errors.name}</p>
 
@@ -229,21 +221,21 @@ export default function Login({ onLoginSuccess }) {
               <p className="auth-err">{errors.regEmail}</p>
 
               <label htmlFor="region">Región *</label>
-              <select id="region" value={region} onChange={(e) => setRegion(e.target.value)}>
-                <option value="Orizaba-Córdoba">Orizaba-Córdoba</option>
-                <option value="Xalapa">Xalapa</option>
-                <option value="Veracruz">Veracruz</option>
-                <option value="Poza Rica-Tuxpan">Poza Rica-Tuxpan</option>
-                <option value="Coatzacoalcos-Minatitlán">Coatzacoalcos-Minatitlán</option>
+              <select id="region" value={regionId} onChange={(e) => setRegionId(e.target.value)}>
+                <option value="">Selecciona...</option>
+                {regiones.map((r) => (
+                  <option key={getId(r)} value={getId(r)}>{getNombre(r)}</option>
+                ))}
               </select>
 
               <label htmlFor="faculty" style={{ marginTop: "14px" }}>Facultad *</label>
-              <select id="faculty" value={faculty} onChange={(e) => setFaculty(e.target.value)}>
-                <option value="Facultad de Ingeniería">Facultad de Ingeniería</option>
-                <option value="Facultad de Negocios y Tecnologías">Facultad de Negocios y Tecnologías</option>
-                <option value="Facultad de Contaduría">Facultad de Contaduría</option>
+              <select id="faculty" value={facultadId} onChange={(e) => setFacultadId(e.target.value)}>
+                <option value="">Selecciona...</option>
+                {facultades.map((f) => (
+                  <option key={getId(f)} value={getId(f)}>{getNombre(f)}</option>
+                ))}
               </select>
-              <p className="auth-hint">Facultades de la región {region}.</p>
+              <p className="auth-err">{errors.region}</p>
 
               <label htmlFor="regPass">Contraseña</label>
               <input
@@ -253,7 +245,7 @@ export default function Login({ onLoginSuccess }) {
                 value={regPassword}
                 onChange={(e) => setRegPassword(e.target.value)}
               />
-              <p className="auth-hint">Mínimo 8 caracteres y un número.</p>
+              <p className="auth-hint">Mínimo 8 caracteres.</p>
               <p className="auth-err">{errors.regPassword}</p>
 
               <label htmlFor="confirmPass">Confirmar contraseña</label>
@@ -274,54 +266,6 @@ export default function Login({ onLoginSuccess }) {
                 ← Volver a iniciar sesión
               </button>
             </form>
-          )}
-
-          {/* PANTALLA 3: VERIFICA TU CORREO (2FA) */}
-          {step === "verify" && (
-            <form onSubmit={handleVerifySubmit}>
-              <h1>Verifica tu correo</h1>
-              <p className="sub">Enviamos un código de 6 dígitos a:</p>
-              <div className="notice-box">
-                📧 <strong>{email}</strong> <br/>
-                <span style={{ fontSize: "0.8rem", color: "#5d716c" }}>(Demo: usa el código 123456)</span>
-              </div>
-
-              <label htmlFor="authCode">Código de verificación</label>
-              <input
-                id="authCode"
-                type="text"
-                maxLength={6}
-                className="code-input"
-                placeholder="123456"
-                value={authCode}
-                onChange={(e) => setAuthCode(e.target.value)}
-                aria-invalid={!!errors.code}
-              />
-              <p className="auth-err">{errors.code}</p>
-
-              <button className="auth-submit" type="submit" disabled={loading}>
-                {loading ? "Verificando..." : "Verificar y entrar"}
-              </button>
-
-              <button type="button" className="auth-back-btn" onClick={() => { setStep("login"); setAuthCode(""); }}>
-                ← Volver a iniciar sesión
-              </button>
-            </form>
-          )}
-
-          {/* PANTALLA 4: ÉXITO */}
-          {step === "success" && (
-            <div style={{ textAlign: "center" }}>
-              <h1>¡Bienvenido(a)!</h1>
-              <p className="sub">Has ingresado correctamente a Compraventas UV.</p>
-              <button 
-                className="auth-submit" 
-                type="button" 
-                onClick={() => { setStep("login"); setAuthCode(""); setPassword(""); }}
-              >
-                Cerrar sesión (Volver)
-              </button>
-            </div>
           )}
 
         </div>
