@@ -1,14 +1,52 @@
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Heart } from 'lucide-react'
 import ProductCard from '../components/catalog/ProductCard.jsx'
-import { products } from '../data/products.js'
+import ProductDialog from '../components/catalog/ProductDialog.jsx'
+import { useUser } from '../context/UserContext.jsx'
+import { socialService } from '../services/social.js'
+import { aVistaProducto } from '../services/vistaProducto.js'
 import './marketplace.css'
 import './pages.css'
 
-// Hardcodeado: los 3 primeros productos como favoritos
-const favoritos = products.slice(0, 3)
-
 export default function Favoritos() {
+  const { user } = useUser()
+  const [items, setItems] = useState([])
+  const [cargando, setCargando] = useState(true)
+  const [error, setError] = useState('')
+  const [selectedProduct, setSelectedProduct] = useState(null)
+
+  const cargar = useCallback(async () => {
+    try {
+      setItems(await socialService.catalogo(true))
+      setError('')
+    } catch (e) {
+      setError(e.message)
+    } finally {
+      setCargando(false)
+    }
+  }, [])
+
+  useEffect(() => {
+    if (user) cargar()
+    else setCargando(false)
+  }, [user, cargar])
+
+  const favoritos = useMemo(() => items.map(aVistaProducto), [items])
+
+  async function quitar(productId) {
+    try {
+      await socialService.alternarFavorito(productId)
+      await cargar()
+    } catch (e) {
+      setError(e.message)
+    }
+  }
+
+  if (!user) return <p className="page-count">Inicia sesión con el botón «Entrar» para ver tus favoritos.</p>
+  if (cargando) return <p className="page-count">Cargando…</p>
+  if (error) return <p className="page-count" role="alert">{error}</p>
+
   if (favoritos.length === 0) {
     return (
       <div className="vacio">
@@ -29,11 +67,14 @@ export default function Favoritos() {
             key={product.id}
             product={product}
             isSaved
-            onOpen={() => {}}
-            onToggleSaved={() => {}}
+            onOpen={() => setSelectedProduct(product)}
+            onToggleSaved={() => quitar(product.id)}
           />
         ))}
       </section>
+      {selectedProduct && (
+        <ProductDialog product={selectedProduct} onClose={() => setSelectedProduct(null)} onChanged={cargar} />
+      )}
     </>
   )
 }

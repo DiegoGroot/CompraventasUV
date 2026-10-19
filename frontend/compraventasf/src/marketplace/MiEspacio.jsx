@@ -2,12 +2,15 @@ import { useEffect, useState } from 'react'
 import { Plus, Pencil, Trash2, ArrowLeft } from 'lucide-react'
 import { useUser } from '../context/UserContext.jsx'
 import { productService, urlImagen } from '../services/products.js'
+import { puestosService } from '../services/puestos.js'
+import { imgUrl } from '../services/media.js'
 
 const ESTADOS = ['disponible', 'reservado', 'vendido', 'oculto']
 
 const css = `
 .me-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;gap:12px;flex-wrap:wrap}
 .me-head h2{margin:0;font-family:var(--font-title)}
+.me-tabs{display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap}
 .me-btn{display:inline-flex;align-items:center;gap:8px;padding:12px 20px;border:0;border-radius:12px;background:var(--green);color:#fff;font:600 16px var(--font-body);cursor:pointer}
 .me-btn.sec{background:transparent;color:var(--green);border:1px solid var(--green)}
 .me-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:20px}
@@ -15,8 +18,10 @@ const css = `
 .me-card img,.me-noimg{width:100%;height:170px;object-fit:cover;background:#eee;display:block}
 .me-body{padding:14px}
 .me-body h3{margin:0 0 4px;font-size:17px}
+.me-body p{margin:0 0 10px;color:var(--muted)}
 .me-price{font-weight:700;color:var(--green);margin-bottom:10px}
 .me-row{display:flex;gap:8px;align-items:center}
+.me-row + .me-row{margin-top:8px}
 .me-row select{flex:1;padding:8px;border:1px solid var(--border);border-radius:10px;font:inherit}
 .me-icon{display:grid;place-items:center;width:38px;height:38px;border:1px solid var(--border);border-radius:10px;background:var(--surface);cursor:pointer;color:var(--muted)}
 .me-icon:hover{color:var(--green)}
@@ -30,6 +35,11 @@ const css = `
 .me-previews img{width:90px;height:90px;object-fit:cover;border-radius:10px}
 .me-err{color:#b3261e;margin-top:8px}
 `
+
+const tId = (t) => t.ID ?? t.id
+const tNombre = (t) => t.Nombre ?? t.nombre ?? ''
+const tDesc = (t) => t.Descripcion ?? t.descripcion ?? ''
+const tImagen = (t) => t.ImagenLink ?? t.imagen_link ?? null
 
 function Formulario({ inicial, categorias, user, onCancel, onSaved }) {
   const editando = Boolean(inicial)
@@ -127,19 +137,95 @@ function Formulario({ inicial, categorias, user, onCancel, onSaved }) {
   )
 }
 
+function FormularioPuesto({ categorias, user, onCancel, onSaved }) {
+  const [nombre, setNombre] = useState('')
+  const [descripcion, setDescripcion] = useState('')
+  const [categoriaId, setCategoriaId] = useState('')
+  const [archivo, setArchivo] = useState(null)
+  const [error, setError] = useState('')
+  const [guardando, setGuardando] = useState(false)
+
+  async function enviar(e) {
+    e.preventDefault()
+    setError('')
+    if (!categoriaId) return setError('Elige una categoría principal.')
+    if (!user.regionId || !user.facultadId)
+      return setError('Cierra sesión y vuelve a entrar para completar tu perfil.')
+
+    setGuardando(true)
+    try {
+      const imagen_link = archivo ? await productService.subirImagen(archivo) : null
+      await puestosService.crear({
+        categoria_principal_id: Number(categoriaId),
+        region_id: Number(user.regionId),
+        facultad_id: Number(user.facultadId),
+        nombre: nombre.trim(),
+        descripcion: descripcion.trim(),
+        imagen_link,
+      })
+      onSaved()
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setGuardando(false)
+    }
+  }
+
+  return (
+    <form className="me-form" onSubmit={enviar}>
+      <button type="button" className="me-btn sec" style={{ alignSelf: 'flex-start' }} onClick={onCancel}>
+        <ArrowLeft size={18} /> Volver
+      </button>
+      <h2 style={{ fontFamily: 'var(--font-title)' }}>Nuevo puesto</h2>
+
+      <label htmlFor="mp-nombre">Nombre del puesto *</label>
+      <input id="mp-nombre" value={nombre} onChange={(e) => setNombre(e.target.value)} required maxLength={255} />
+
+      <label htmlFor="mp-desc">Descripción</label>
+      <textarea id="mp-desc" value={descripcion} onChange={(e) => setDescripcion(e.target.value)} />
+
+      <label htmlFor="mp-cat">Categoría principal *</label>
+      <select id="mp-cat" value={categoriaId} onChange={(e) => setCategoriaId(e.target.value)} required>
+        <option value="">Selecciona</option>
+        {categorias.map((c) => <option key={c.id} value={c.id}>{c.nombre}</option>)}
+      </select>
+
+      <label htmlFor="mp-img">Imagen de portada (opcional)</label>
+      <input id="mp-img" type="file" accept="image/*" onChange={(e) => setArchivo(e.target.files[0] || null)} />
+      {archivo && (
+        <div className="me-previews">
+          <img src={URL.createObjectURL(archivo)} alt="" />
+        </div>
+      )}
+
+      {error && <p className="me-err" role="alert">{error}</p>}
+      <button className="me-btn" type="submit" disabled={guardando} style={{ marginTop: 16 }}>
+        {guardando ? 'Guardando…' : 'Crear puesto'}
+      </button>
+    </form>
+  )
+}
+
 export default function MiEspacio() {
   const { user } = useUser()
   const [productos, setProductos] = useState([])
+  const [tiendas, setTiendas] = useState([])
   const [categorias, setCategorias] = useState([])
   const [cargando, setCargando] = useState(true)
-  const [vista, setVista] = useState('lista') // 'lista' | 'form'
+  const [seccion, setSeccion] = useState('publicaciones') // 'publicaciones' | 'puestos'
+  const [vista, setVista] = useState('lista') // 'lista' | 'form' | 'puesto'
   const [editando, setEditando] = useState(null)
   const [error, setError] = useState('')
 
   async function cargar() {
     setCargando(true)
     try {
-      setProductos(await productService.misProductos())
+      const [prods, tiendasRes] = await Promise.all([
+        productService.misProductos(),
+        puestosService.misTiendas(),
+      ])
+      setProductos(prods || [])
+      setTiendas(tiendasRes || [])
     } catch (e) {
       setError(e.message)
     } finally {
@@ -164,11 +250,34 @@ export default function MiEspacio() {
     }
   }
 
+  async function asignarPuesto(id, tiendaId) {
+    setError('')
+    try {
+      await puestosService.asignarProducto(id, tiendaId)
+      setProductos((ps) => ps.map((p) => (p.ID === id ? { ...p, TiendaID: tiendaId || null } : p)))
+    } catch (e) {
+      setError(e.message)
+    }
+  }
+
   async function eliminar(p) {
     if (!window.confirm(`¿Eliminar «${p.Nombre}»? Esta acción no se puede deshacer.`)) return
     try {
       await productService.eliminar(p.ID)
       setProductos((ps) => ps.filter((x) => x.ID !== p.ID))
+    } catch (e) {
+      setError(e.message)
+    }
+  }
+
+  async function eliminarPuesto(t) {
+    const ok = window.confirm(
+      `¿Eliminar el puesto «${tNombre(t)}»? Se eliminarán también todas las publicaciones que tenga asignadas. Esta acción no se puede deshacer.`,
+    )
+    if (!ok) return
+    try {
+      await puestosService.eliminar(tId(t))
+      await cargar()
     } catch (e) {
       setError(e.message)
     }
@@ -189,20 +298,79 @@ export default function MiEspacio() {
     )
   }
 
+  if (vista === 'puesto') {
+    return (
+      <>
+        <style>{css}</style>
+        <FormularioPuesto
+          categorias={categorias}
+          user={user}
+          onCancel={() => setVista('lista')}
+          onSaved={() => { setVista('lista'); setSeccion('puestos'); cargar() }}
+        />
+      </>
+    )
+  }
+
+  const enPuestos = seccion === 'puestos'
+
   return (
     <>
       <style>{css}</style>
-      <div className="me-head">
-        <h2>Mis publicaciones</h2>
-        <button className="me-btn" onClick={() => { setEditando(null); setVista('form') }}>
-          <Plus size={20} /> Nueva publicación
+
+      <div className="me-tabs">
+        <button className={`me-btn ${enPuestos ? 'sec' : ''}`} onClick={() => setSeccion('publicaciones')}>
+          Mis publicaciones
         </button>
+        <button className={`me-btn ${enPuestos ? '' : 'sec'}`} onClick={() => setSeccion('puestos')}>
+          Mis puestos
+        </button>
+      </div>
+
+      <div className="me-head">
+        <h2>{enPuestos ? 'Mis puestos' : 'Mis publicaciones'}</h2>
+        {enPuestos ? (
+          <button className="me-btn" onClick={() => setVista('puesto')}>
+            <Plus size={20} /> Nuevo puesto
+          </button>
+        ) : (
+          <button className="me-btn" onClick={() => { setEditando(null); setVista('form') }}>
+            <Plus size={20} /> Nueva publicación
+          </button>
+        )}
       </div>
 
       {error && <p className="me-err" role="alert">{error}</p>}
 
       {cargando ? (
         <p className="me-empty">Cargando…</p>
+      ) : enPuestos ? (
+        tiendas.length === 0 ? (
+          <p className="me-empty">Aún no tienes puestos. Crea uno para agrupar tus publicaciones.</p>
+        ) : (
+          <div className="me-grid">
+            {tiendas.map((t) => {
+              const img = tImagen(t)
+              const total = productos.filter((p) => (p.TiendaID ?? null) === tId(t)).length
+              return (
+                <article className="me-card" key={tId(t)}>
+                  {img ? <img src={imgUrl(img)} alt={tNombre(t)} /> : <div className="me-noimg" />}
+                  <div className="me-body">
+                    <h3>{tNombre(t)}</h3>
+                    {tDesc(t) && <p>{tDesc(t)}</p>}
+                    <div className="me-price">{total} {total === 1 ? 'publicación' : 'publicaciones'}</div>
+                    <div className="me-row">
+                      <span style={{ flex: 1 }} />
+                      <button className="me-icon" title="Eliminar puesto" onClick={() => eliminarPuesto(t)}>
+                        <Trash2 size={18} />
+                      </button>
+                    </div>
+                  </div>
+                </article>
+              )
+            })}
+          </div>
+        )
       ) : productos.length === 0 ? (
         <p className="me-empty">Aún no has publicado nada.</p>
       ) : (
@@ -227,6 +395,15 @@ export default function MiEspacio() {
                       <Trash2 size={18} />
                     </button>
                   </div>
+                  {tiendas.length > 0 && (
+                    <div className="me-row">
+                      <select value={p.TiendaID ?? ''} onChange={(e) => asignarPuesto(p.ID, e.target.value)}
+                        aria-label="Puesto de la publicación">
+                        <option value="">Sin puesto</option>
+                        {tiendas.map((t) => <option key={tId(t)} value={tId(t)}>{tNombre(t)}</option>)}
+                      </select>
+                    </div>
+                  )}
                 </div>
               </article>
             )

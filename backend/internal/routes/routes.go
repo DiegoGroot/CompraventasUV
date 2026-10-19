@@ -46,12 +46,44 @@ func SetupRoutes(r *gin.Engine) {
 			privadas.PUT("/productos/:id", controllers.ActualizarProducto)
 			privadas.DELETE("/productos/:id", controllers.EliminarProducto)
 
+						// --- Compras y ventas ---
+			privadas.POST("/compras", controllers.CrearCompra)
+			privadas.GET("/mis-compras", controllers.ObtenerMisCompras)
+			privadas.GET("/mis-ventas", controllers.ObtenerMisVentas)
+			privadas.PATCH("/compras/:id/estado", controllers.ActualizarEstadoCompra)
+
+			// --- Mensajes ---
+			privadas.POST("/mensajes", controllers.EnviarMensaje)
+			privadas.GET("/conversaciones", controllers.ObtenerConversaciones)
+			privadas.GET("/mensajes/:usuarioID", controllers.ObtenerMensajes)
+
+						// --- Carrito ---
+			privadas.GET("/carrito", controllers.ObtenerCarrito)
+			privadas.POST("/carrito", controllers.AgregarCarrito)
+			privadas.POST("/carrito/comprar", controllers.ComprarCarrito)
+			privadas.PATCH("/carrito/:productoID", controllers.ActualizarCarrito)
+			privadas.DELETE("/carrito/:productoID", controllers.QuitarCarrito)
+
+			// --- Favoritos ---
+			privadas.GET("/favoritos", controllers.ObtenerFavoritos)
+			privadas.POST("/favoritos/:productoID", controllers.AlternarFavorito)
+
+						// --- Catálogo ---
+			privadas.GET("/catalogo", controllers.ObtenerCatalogo)
+
+			// --- Reportes ---
+			privadas.POST("/reportes", controllers.CrearReporte)
+			privadas.GET("/mis-reportes", controllers.ObtenerMisReportes)
+
 			// --- Mis publicaciones y estado ---
 			privadas.GET("/mis-productos", controllers.ObtenerMisProductos)
 			privadas.PATCH("/productos/:id/estado", controllers.CambiarEstadoProducto)
-
+			privadas.GET("/puestos", controllers.ListarPuestos)
 			// --- Subida de archivos ---
 			privadas.POST("/upload", controllers.SubirImagen)
+
+						privadas.GET("/puestos", controllers.ListarPuestos)
+			privadas.PATCH("/productos/:id/tienda", controllers.AsignarProductoTienda)
 		}
 	}
 }

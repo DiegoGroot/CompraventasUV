@@ -1,10 +1,10 @@
 const BASE = 'http://localhost:8081'
 const API = `${BASE}/api/v1`
-const FIELD = 'imagen' // ← debe coincidir con c.FormFile("...") del backend
+const FIELD = 'file' // ← debe coincidir con c.FormFile("...") del backend
 
 const token = () => sessionStorage.getItem('compraventasuv:token')
 
-async function request(path, { method = 'GET', body, form } = {}) {
+export async function request(path, { method = 'GET', body, form } = {}) {
   const headers = {}
   if (token()) headers.Authorization = `Bearer ${token()}`
   if (body) headers['Content-Type'] = 'application/json'

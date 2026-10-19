@@ -1,7 +1,6 @@
 package controllers
 
 import (
-	"fmt"
 	"net/http"
 	"path/filepath"
 	"strings"
@@ -43,7 +42,7 @@ func SubirImagen(c *gin.Context) {
 
 	// 5. Devolver la URL pública (asumiendo que el server corre en localhost:8080)
 	// En producción, reemplazarías localhost con tu dominio real.
-	urlPublica := fmt.Sprintf("http://localhost:8080/uploads/%s", nuevoNombre)
+	urlPublica := "/uploads/" + nuevoNombre
 
 	c.JSON(http.StatusOK, gin.H{
 		"mensaje": "Imagen subida con éxito",

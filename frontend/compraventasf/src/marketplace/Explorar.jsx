@@ -1,46 +1,80 @@
-import { useState } from 'react'
-import AuthDialog from '../components/auth/AuthDialog.jsx'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import CatalogFilters from '../components/catalog/CatalogFilters.jsx'
 import ProductCard from '../components/catalog/ProductCard.jsx'
 import ProductDialog from '../components/catalog/ProductDialog.jsx'
-import SiteHeader from '../components/site/SiteHeader.jsx'
-import { campuses, categories, products } from '../data/products.js'
+import { useUser } from '../context/UserContext.jsx'
+import { socialService } from '../services/social.js'
+import { aVistaProducto } from '../services/vistaProducto.js'
 
 import './marketplace.css'
 
-function App() {
+export default function Explorar() {
+  const { user } = useUser()
+  const [items, setItems] = useState([])
+  const [cargando, setCargando] = useState(true)
+  const [error, setError] = useState('')
   const [searchValue, setSearchValue] = useState('')
   const [selectedCategory, setSelectedCategory] = useState('all')
   const [selectedCampus, setSelectedCampus] = useState('all')
   const [sortOrder, setSortOrder] = useState('recent')
-  const [savedIds, setSavedIds] = useState([])
   const [savedOnly, setSavedOnly] = useState(false)
   const [selectedProduct, setSelectedProduct] = useState(null)
-  const [authMode, setAuthMode] = useState(null)
+
+  const cargar = useCallback(async () => {
+    try {
+      setItems(await socialService.catalogo())
+      setError('')
+    } catch (e) {
+      setError(e.message)
+    } finally {
+      setCargando(false)
+    }
+  }, [])
+
+  useEffect(() => {
+    if (user) cargar()
+    else setCargando(false)
+  }, [user, cargar])
+
+  const productos = useMemo(() => items.map(aVistaProducto), [items])
+
+  const categories = useMemo(
+    () => [
+      { id: 'all', label: 'Todo' },
+      ...[...new Set(productos.map((p) => p.category).filter(Boolean))].map((c) => ({ id: c, label: c })),
+    ],
+    [productos],
+  )
+
+  const campuses = useMemo(
+    () => [...new Set(productos.map((p) => p.campus).filter(Boolean))],
+    [productos],
+  )
 
   const normalizedSearch = searchValue.trim().toLocaleLowerCase('es')
-  const visibleProducts = products
-    .filter((product) => selectedCategory === 'all' || product.category === selectedCategory)
-    .filter((product) => selectedCampus === 'all' || product.campus === selectedCampus)
-    .filter((product) => !savedOnly || savedIds.includes(product.id))
-    .filter((product) => {
-      const categoryName = categories.find((category) => category.id === product.category)?.label || ''
-      return `${product.title} ${product.description} ${categoryName}`.toLocaleLowerCase('es').includes(normalizedSearch)
-    })
-    .sort((first, second) => {
-      if (sortOrder === 'price-low') return first.price - second.price
-      if (sortOrder === 'price-high') return second.price - first.price
-      return products.indexOf(first) - products.indexOf(second)
+  const visibleProducts = productos
+    .filter((p) => selectedCategory === 'all' || p.category === selectedCategory)
+    .filter((p) => selectedCampus === 'all' || p.campus === selectedCampus)
+    .filter((p) => !savedOnly || p.saved)
+    .filter((p) => `${p.title} ${p.description} ${p.category}`.toLocaleLowerCase('es').includes(normalizedSearch))
+    .sort((a, b) => {
+      if (sortOrder === 'price-low') return a.price - b.price
+      if (sortOrder === 'price-high') return b.price - a.price
+      return productos.indexOf(a) - productos.indexOf(b)
     })
 
-  function toggleSaved(productId) {
-    setSavedIds((currentIds) => currentIds.includes(productId) ? currentIds.filter((id) => id !== productId) : [...currentIds, productId])
+  async function toggleSaved(productId) {
+    setItems((cur) => cur.map((p) => (p.id === productId ? { ...p, favorito: !p.favorito } : p)))
+    try {
+      await socialService.alternarFavorito(productId)
+    } catch (e) {
+      setError(e.message)
+      cargar()
+    }
   }
 
-  function startContact() {
-    setSelectedProduct(null)
-    setAuthMode('login')
-  }
+  if (!user) return <p className="page-count">Inicia sesión con el botón «Entrar» para ver los artículos.</p>
+  if (cargando) return <p className="page-count">Cargando…</p>
 
   return (
     <div className="marketplace-app">
@@ -61,25 +95,56 @@ function App() {
           onChange={(event) => setSearchValue(event.target.value)}
         />
 
-        <CatalogFilters categories={categories} selectedCategory={selectedCategory} onCategoryChange={setSelectedCategory} campuses={campuses} selectedCampus={selectedCampus} onCampusChange={setSelectedCampus} sortOrder={sortOrder} onSortChange={setSortOrder} savedCount={savedIds.length} savedOnly={savedOnly} onSavedOnlyChange={() => setSavedOnly((current) => !current)} />
+        <CatalogFilters
+          categories={categories}
+          selectedCategory={selectedCategory}
+          onCategoryChange={setSelectedCategory}
+          campuses={campuses}
+          selectedCampus={selectedCampus}
+          onCampusChange={setSelectedCampus}
+          sortOrder={sortOrder}
+          onSortChange={setSortOrder}
+          savedCount={productos.filter((p) => p.saved).length}
+          savedOnly={savedOnly}
+          onSavedOnlyChange={() => setSavedOnly((current) => !current)}
+        />
+
+        {error && <p role="alert" style={{ color: '#b3261e' }}>{error}</p>}
 
         {visibleProducts.length > 0 ? (
           <section className="product-grid" aria-label="Artículos disponibles">
-            {visibleProducts.map((product) => <ProductCard key={product.id} product={product} isSaved={savedIds.includes(product.id)} onOpen={() => setSelectedProduct(product)} onToggleSaved={() => toggleSaved(product.id)} />)}
+            {visibleProducts.map((product) => (
+              <ProductCard
+                key={product.id}
+                product={product}
+                isSaved={product.saved}
+                onOpen={() => setSelectedProduct(product)}
+                onToggleSaved={() => toggleSaved(product.id)}
+              />
+            ))}
           </section>
         ) : (
           <div className="empty-state">
             <h2>No encontramos artículos</h2>
             <p>Prueba otra búsqueda o cambia los filtros.</p>
-            <button type="button" onClick={() => { setSearchValue(''); setSelectedCategory('all'); setSelectedCampus('all'); setSavedOnly(false) }}>Limpiar filtros</button>
+            <button
+              type="button"
+              onClick={() => {
+                setSearchValue('')
+                setSelectedCategory('all')
+                setSelectedCampus('all')
+                setSavedOnly(false)
+              }}
+            >
+              Limpiar filtros
+            </button>
           </div>
         )}
       </main>
 
-      {selectedProduct && <ProductDialog product={selectedProduct} onClose={() => setSelectedProduct(null)} onContact={startContact} />}
-      {authMode && <AuthDialog initialMode={authMode} onClose={() => setAuthMode(null)} />}
+      {selectedProduct && (
+        <ProductDialog product={selectedProduct} onClose={() => setSelectedProduct(null)} onChanged={cargar} />
+      )}
     </div>
   )
 }
-
-export default App
